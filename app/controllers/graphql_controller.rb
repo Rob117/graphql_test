@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class GraphqlController < ApplicationController
+  skip_before_action :verify_authenticity_token
+  before_action :ensure_gzip_allowed
+
   def execute
     variables = ensure_hash(params[:variables])
     query = params[:query]
@@ -11,6 +14,12 @@ class GraphqlController < ApplicationController
     }
     result = GraphqlTutorialSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
     render json: result
+  end
+
+  protected
+
+  def ensure_gzip_allowed
+    render json: {error: 'gzip header needed for all requests'}, status: 409 unless request.headers["HTTP_ACCEPT_ENCODING"].present?
   end
 
   private
